@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -36,14 +36,31 @@ interface CalculatedCompetitor {
 }
 
 export default function AdminClassementGeneral() {
-  const { competitors, hourlyEntries, bigCatches, isOnline } = useFirestore();
+  const { competitors, hourlyEntries, bigCatches } = useFirestore();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<string>('classementGeneral');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [sectorFilter, setSectorFilter] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [isOnline, setIsOnline] = useState(true);
 
   const sectors = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+  // Set initial online status
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Calculate live data for all competitors
   const calculatedCompetitors = useMemo(() => {
@@ -71,8 +88,9 @@ export default function AdminClassementGeneral() {
             nbPrisesGlobal += entry.fishCount;
             poidsTotal += entry.totalWeight;
             
-            if (entry.timestamp && (!lastValidEntry || entry.timestamp > lastValidEntry)) {
-              lastValidEntry = entry.timestamp;
+            const timestamp = entry.timestamp?.toDate ? entry.timestamp.toDate() : entry.timestamp;
+            if (timestamp && (!lastValidEntry || timestamp > lastValidEntry)) {
+              lastValidEntry = timestamp;
             }
           });
         }
@@ -173,7 +191,7 @@ export default function AdminClassementGeneral() {
     });
     
     return [...nonZeroCompetitors, ...zeroCoeffCompetitors];
-  }, [competitors, hourlyEntries, bigCatches, sectors]);
+  }, [competitors, hourlyEntries, bigCatches]);
 
   // Apply sorting
   const sortedCompetitors = useMemo(() => {
