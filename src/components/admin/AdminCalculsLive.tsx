@@ -200,7 +200,7 @@ export default function AdminCalculsLive() {
           fullName: comp.name,
           equipe: comp.equipe,
           photo: firestoreCompetitors.find(c => c.id === comp.id)?.photo || '',
-          status: 'active',
+          status: 'active' as const,  // FIX: Added 'as const' for proper typing
           // Add calculated fields
           nbPrisesGlobal: comp.nbPrisesGlobal,
           poidsTotal: comp.poidsTotal,
@@ -217,7 +217,7 @@ export default function AdminCalculsLive() {
     });
     
     return sorted;
-  }, [firestoreCompetitors, hourlyDataByCompetitor, bigCatchesByCompetitor, activeSector]);
+  }, [firestoreCompetitors, hourlyDataByCompetitor, bigCatchesByCompetitor, activeSector, saveCompetitor]);
 
   // Calculate sector totals
   const sectorTotals = useMemo((): SectorTotals => {
